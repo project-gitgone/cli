@@ -1,5 +1,5 @@
 {
-  "name": "gitgone-cli",
+  "name": "@project-gitgone/cli",
   "version": "1.0.0",
   "description": "GitGone Command Line Interface",
   "main": "dist/index.js",
@@ -14,6 +14,7 @@
     "node": ">=20"
   },
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
   "scripts": {
