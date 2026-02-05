@@ -16,6 +16,7 @@ export const apiClient = async (path: string, options: FetchOptions = {}) => {
   };
 
   if (options.requireAuth !== false && authToken) {
+    //@ts-ignore
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
