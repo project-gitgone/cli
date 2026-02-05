@@ -39,7 +39,7 @@ export const loginAction = async () => {
     setConfig('keySalt', result.user.keySalt);
     setConfig('keyEncryptionAlgo', result.user.keyEncryptionAlgo);
 
-    spinner.succeed(`Logged in as ${result.user.full_name}`);
+    spinner.succeed(`Logged in as ${result.user.fullName}`);
   } catch (error: any) {
     spinner.fail(`Login failed: ${error.message}`);
   }

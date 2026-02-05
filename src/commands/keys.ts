@@ -35,7 +35,7 @@ keysCommand
     }
 
     console.log(chalk.blue(`Found ${pendingUsers.length} member(s) waiting for access:`));
-    pendingUsers.forEach((u: any) => console.log(` - ${u.full_name} (${u.email})`));
+    pendingUsers.forEach((u: any) => console.log(` - ${u.fullName} (${u.email})`));
 
     const confirm = await prompts({
         type: 'confirm',
@@ -69,9 +69,9 @@ keysCommand
         const projectKey = decryptProjectKey(myKeyData.encryptedKey, privateKey);
 
         for (const user of pendingUsers) {
-            processSpinner.text = `Sharing key with ${user.full_name}...`;
+            processSpinner.text = `Sharing key with ${user.fullName}...`;
             
-            const encryptedForTarget = encryptProjectKeyForUser(projectKey, user.public_key);
+            const encryptedForTarget = encryptProjectKeyForUser(projectKey, user.publicKey);
             
             await apiClient(`/api/keys/${localConfig.projectId}/share`, {
                 method: 'POST',
