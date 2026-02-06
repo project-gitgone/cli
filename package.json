@@ -1,11 +1,11 @@
 {
   "name": "@project-gitgone/cli",
-  "version": "26.2.6",
+  "version": "26.2.7",
   "description": "GitGone Command Line Interface",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "gitgone": "./dist/index.js"
+    "gitgone": "dist/index.js"
   },
   "files": [
     "dist"
@@ -14,18 +14,19 @@
     "node": ">=20"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
-    "access": "public"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "lint": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 0",
+    "test": "tsx bin/test.ts",
     "prepare": "npm run build"
   },
-  "keywords": [],
+  "keywords": ["cli", "gitgone", "command-line", "tool","environment", "project", "management", "developer", "workflow"],
   "author": "Théo Lagache <theo@lagache.dev>",
   "license": "MIT",
   "dependencies": {
@@ -38,7 +39,13 @@
     "ora": "^8.0.1",
     "prompts": "^2.4.2"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/project-gitgone/cli.git"
+  },
   "devDependencies": {
+    "@japa/assert": "^4.2.0",
+    "@japa/runner": "^5.3.0",
     "@types/cross-spawn": "^6.0.6",
     "@types/node": "^20.11.24",
     "@types/prompts": "^2.4.9",
