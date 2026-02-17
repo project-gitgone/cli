@@ -1,6 +1,6 @@
 {
   "name": "@project-gitgone/cli",
-  "version": "26.2.10",
+  "version": "26.2.11",
   "description": "GitGone Command Line Interface",
   "main": "dist/index.js",
   "type": "module",
@@ -26,7 +26,17 @@
     "test": "tsx bin/test.ts",
     "prepare": "npm run build"
   },
-  "keywords": ["cli", "gitgone", "command-line", "tool","environment", "project", "management", "developer", "workflow"],
+  "keywords": [
+    "cli",
+    "gitgone",
+    "command-line",
+    "tool",
+    "environment",
+    "project",
+    "management",
+    "developer",
+    "workflow"
+  ],
   "author": "Théo Lagache <theo@lagache.dev>",
   "license": "MIT",
   "dependencies": {
