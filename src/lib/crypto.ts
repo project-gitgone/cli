@@ -110,6 +110,18 @@ export const encryptSecret = (text: string, projectKey: string) => {
   };
 };
 
+export const encryptWithToken = (text: string, tokenSecret: string) => {
+  const key = crypto.createHash('sha256').update(tokenSecret).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv(SECRET_ALGO, key, iv);
+  
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+
+  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+};
+
 export const decryptSecret = (ciphertext: string, iv: string, authTag: string, projectKey: string) => {
   const key = crypto.createHash('sha256').update(projectKey).digest();
   
