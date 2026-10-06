@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { setupEnvironment, mockFetch } from '../helpers.js'
 import prompts from 'prompts'
-import { projectCommand } from '../../src/commands/project.js'
+import { projectCommand } from '../../src/commands/project/project.js'
 import { setLocalConfig } from '../../src/lib/config.js'
 
 test.group('Project Command', (group) => {

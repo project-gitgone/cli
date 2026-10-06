@@ -4,7 +4,7 @@ import prompts from 'prompts'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { pullCommand } from '../../src/commands/pull.js'
+import { pullCommand } from '../../src/commands/secrets/pull.js'
 import { setConfig, setLocalConfig } from '../../src/lib/config.js'
 import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
 
@@ -37,7 +37,7 @@ test.group('Pull Command', (group) => {
     const encryptedSecret = encryptSecret(secretContent, projectKey);
 
     const restoreFetch = mockFetch(async (url) => {
-      if (url.endsWith(`/api/keys/${projectId}`)) {
+      if (url.endsWith(`/api/projects/${projectId}/environments/development/key`)) {
         return {
           ok: true,
           status: 200,
@@ -61,7 +61,7 @@ test.group('Pull Command', (group) => {
 
     prompts.inject([vaultPassword])
 
-    await pullCommand.parseAsync([], { from: 'user' })
+    await pullCommand.parseAsync(['-e', 'development'], { from: 'user' })
 
     const envPath = path.resolve(process.cwd(), '.env');
     assert.isTrue(fs.existsSync(envPath), '.env should be created');

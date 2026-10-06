@@ -3,7 +3,7 @@ import { setupEnvironment, mockFetch } from '../helpers.js'
 import prompts from 'prompts'
 import fs from 'fs'
 import path from 'path'
-import { linkCommand } from '../../src/commands/link.js'
+import { linkCommand } from '../../src/commands/project/link.js'
 import { getLocalConfig, setConfig } from '../../src/lib/config.js'
 
 test.group('Link Command', (group) => {

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { nanoid } from 'nanoid';
+import { clearConfig } from '../src/lib/config.js';
 
 export const setupEnvironment = () => {
   const testId = nanoid();
@@ -13,6 +14,7 @@ export const setupEnvironment = () => {
 
   process.env.XDG_CONFIG_HOME = path.join(tmpDir, 'config');
   process.chdir(tmpDir);
+  clearConfig();
 
   return {
     tmpDir,
@@ -58,11 +60,16 @@ export const spyConsole = () => {
 
 export const spyExit = () => {
   const originalExit = process.exit;
+  let resolveExit: (code?: number) => void = () => {};
+  const exited = new Promise<number | undefined>((resolve) => (resolveExit = resolve));
   // @ts-ignore
   process.exit = (code?: number) => {
-    throw new Error(`Process exit with code ${code}`);
+    resolveExit(code);
   };
-  return () => {
-    process.exit = originalExit;
+  return {
+    exited,
+    restore: () => {
+      process.exit = originalExit;
+    },
   };
 };

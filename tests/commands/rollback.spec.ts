@@ -4,9 +4,9 @@ import prompts from 'prompts'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { rollbackCommand } from '../../src/commands/rollback.js'
+import { rollbackCommand } from '../../src/commands/secrets/rollback.js'
 import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
+import { decryptSnapshot, encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
 
 test.group('Rollback Command', (group) => {
   group.each.setup(() => {
@@ -48,7 +48,7 @@ test.group('Rollback Command', (group) => {
           ])
         }
       }
-      if (url.endsWith(`/api/keys/${projectId}`)) {
+      if (url.endsWith(`/api/projects/${projectId}/environments/development/key`)) {
         return {
           ok: true,
           status: 200,
@@ -73,7 +73,7 @@ test.group('Rollback Command', (group) => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ id: 'snap_3', version: 3 })
+          json: async () => ({ id: 'snap_3', version: rolledBackData.version })
         }
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
@@ -88,7 +88,15 @@ test.group('Rollback Command', (group) => {
     assert.equal(fs.readFileSync(envPath, 'utf-8'), oldSecretContent);
 
     assert.isNotNull(rolledBackData);
-    assert.equal(rolledBackData.encryptedData.ciphertext, encryptedOldSecret.ciphertext);
+    assert.equal(rolledBackData.version, 3);
+    assert.equal(rolledBackData.cryptoVersion, 2);
+    assert.equal(rolledBackData.rollbackOf, 'snap_1');
+    const restored = decryptSnapshot(
+      { ...rolledBackData.encryptedData, tag: rolledBackData.encryptedData.authTag, version: 3, cryptoVersion: 2 },
+      projectKey,
+      { projectId, environment: 'development' }
+    );
+    assert.equal(restored, oldSecretContent);
 
     restoreFetch()
   })

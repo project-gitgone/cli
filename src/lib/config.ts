@@ -2,9 +2,10 @@
 import Conf from 'conf';
 import fs from 'fs';
 import path from 'path';
+import type { KdfParams } from './crypto.js';
 
 
-type ConfigSchema = {
+export type ConfigSchema = {
   serverUrl: string;
   authToken?: string;
   userEmail?: string;
@@ -12,6 +13,10 @@ type ConfigSchema = {
   encryptedPrivateKey?: string;
   keySalt?: string;
   keyEncryptionAlgo?: string;
+  cryptoVersion?: number;
+  kdfParams?: KdfParams;
+  seenVersions?: Record<string, number>;
+  knownKeys?: Record<string, { email: string; fingerprint: string }>;
 };
 
 const config = new Conf<ConfigSchema>({
@@ -22,7 +27,7 @@ const config = new Conf<ConfigSchema>({
 });
 
 export const getConfig = () => config.store;
-export const setConfig = (key: keyof ConfigSchema, value: any) => config.set(key, value);
+export const setConfig = <K extends keyof ConfigSchema>(key: K, value: ConfigSchema[K]) => config.set(key, value);
 export const clearConfig = () => config.clear();
 export const deleteConfig = (key: keyof ConfigSchema) => config.delete(key);
 
@@ -41,7 +46,7 @@ const serializeGitGone = (data: Record<string, string | undefined>) => {
 
 const parseGitGone = (content: string) => {
   const lines = content.split('\n');
-  const data: any = {};
+  const data: Record<string, string> = {};
   for (const line of lines) {
     if (line.startsWith('#') || line.startsWith('[') || !line.includes(':')) continue;
     const [rawKey, ...valueParts] = line.split(':');
@@ -52,7 +57,7 @@ const parseGitGone = (content: string) => {
   return data;
 };
 
-export const getLocalConfig = () => {
+export const getLocalConfig = (): LocalConfig | null => {
   const configPath = path.resolve(process.cwd(), LOCAL_CONFIG_FILE);
   if (!fs.existsSync(configPath)) return null;
   try {
@@ -66,7 +71,11 @@ export const getLocalConfig = () => {
   }
 };
 
-export const setLocalConfig = (data: { projectId?: string; teamId?: string; projectName?: string; serverUrl?: string }) => {
+export type LocalConfig = { projectId?: string; teamId?: string; projectName?: string; serverUrl?: string };
+
+export const LOCAL_CONFIG_KEYS = ['projectId', 'teamId', 'projectName', 'serverUrl'] as const;
+
+export const setLocalConfig = (data: LocalConfig) => {
   const configPath = path.resolve(process.cwd(), LOCAL_CONFIG_FILE);
   const current = getLocalConfig() || {};
   const updated = { ...current, ...data };

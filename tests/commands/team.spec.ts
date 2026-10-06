@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { setupEnvironment, mockFetch } from '../helpers.js'
 import prompts from 'prompts'
-import { teamCommand } from '../../src/commands/team.js'
+import { teamCommand } from '../../src/commands/access/team.js'
 
 test.group('Team Command', (group) => {
   group.each.setup(() => {
@@ -45,6 +45,13 @@ test.group('Team Command', (group) => {
           })
         }
       }
+      if (url.endsWith('/api/roles')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{ id: 'role_developer', key: 'developer', name: 'Developer', scope: 'workspace', isSystem: true, grants: [] }]
+        }
+      }
       if (url.endsWith('/api/teams/team_1/members') && init?.method === 'POST') {
         addedMember = JSON.parse(init.body);
         return {
@@ -56,13 +63,13 @@ test.group('Team Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject(['team_1', 'new@member.com', 'MEMBER'])
+    prompts.inject(['team_1', 'new@member.com', 'role_developer'])
 
     await teamCommand.parseAsync(['add-member'], { from: 'user' })
 
     assert.isNotNull(addedMember)
     assert.equal(addedMember.email, 'new@member.com')
-    assert.equal(addedMember.role, 'MEMBER')
+    assert.equal(addedMember.roleId, 'role_developer')
 
     restoreFetch()
   })

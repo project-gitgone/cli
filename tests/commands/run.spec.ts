@@ -4,7 +4,7 @@ import prompts from 'prompts'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { runCommand } from '../../src/commands/run.js'
+import { runCommand } from '../../src/commands/secrets/run.js'
 import { setConfig, setLocalConfig } from '../../src/lib/config.js'
 import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
 
@@ -46,7 +46,7 @@ test.group('Run Command', (group) => {
           json: async () => ({ disallowPull: false })
         }
       }
-      if (url.endsWith(`/api/keys/${projectId}`)) {
+      if (url.endsWith(`/api/projects/${projectId}/environments/development/key`)) {
         return {
           ok: true,
           status: 200,
@@ -70,19 +70,16 @@ test.group('Run Command', (group) => {
 
     prompts.inject([vaultPassword])
 
-    const restoreExit = spyExit()
+    const exitSpy = spyExit()
 
     try {
         await runCommand.parseAsync(['echo', 'hello'], { from: 'user' })
-    } catch (e: any) {
-        if (!e.message.includes('Process exit')) {
-            throw e;
-        }
+        assert.equal(await exitSpy.exited, 0)
+    } finally {
+        exitSpy.restore()
+        restoreFetch()
     }
 
     assert.equal(process.env.INJECTED_VAR, 'secret_value')
-
-    restoreExit()
-    restoreFetch()
   })
 })

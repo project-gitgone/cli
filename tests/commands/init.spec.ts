@@ -4,7 +4,7 @@ import prompts from 'prompts'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { initCommand } from '../../src/commands/init.js'
+import { initCommand } from '../../src/commands/project/init.js'
 import { setConfig, getLocalConfig } from '../../src/lib/config.js'
 
 test.group('Init Command', (group) => {

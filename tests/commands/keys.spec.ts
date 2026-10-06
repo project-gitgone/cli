@@ -2,9 +2,9 @@ import { test } from '@japa/runner'
 import { setupEnvironment, mockFetch } from '../helpers.js'
 import prompts from 'prompts'
 import crypto from 'node:crypto'
-import { keysCommand } from '../../src/commands/keys.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser, decryptProjectKey } from '../../src/lib/crypto.js'
+import { keysCommand } from '../../src/commands/project/keys.js'
+import { getConfig, setConfig, setLocalConfig } from '../../src/lib/config.js'
+import { encryptVault, encryptProjectKeyForUser, decryptProjectKey, publicKeyFingerprint } from '../../src/lib/crypto.js'
 
 test.group('Keys Command', (group) => {
   group.each.setup(() => {
@@ -66,7 +66,7 @@ test.group('Keys Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([true, vaultPassword])
+    prompts.inject([true, vaultPassword, true])
 
     await keysCommand.parseAsync(['share'], { from: 'user' })
 
@@ -75,6 +75,11 @@ test.group('Keys Command', (group) => {
     
     const decryptedSharedKey = decryptProjectKey(sharedPayload.encryptedKey, pendingUserKeys.privateKey);
     assert.equal(decryptedSharedKey, rawProjectKey, 'Shared key should match original project key');
+    assert.equal(
+      getConfig().knownKeys?.user_pending_1?.fingerprint,
+      publicKeyFingerprint(pendingUserKeys.publicKey),
+      'the trusted key should be pinned'
+    );
 
     restoreFetch()
   })

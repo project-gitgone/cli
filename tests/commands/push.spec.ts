@@ -3,9 +3,9 @@ import { setupEnvironment, mockFetch } from '../helpers.js'
 import prompts from 'prompts'
 import fs from 'fs'
 import crypto from 'node:crypto'
-import { pushCommand } from '../../src/commands/push.js'
+import { pushCommand } from '../../src/commands/secrets/push.js'
 import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser } from '../../src/lib/crypto.js'
+import { decryptSnapshot, encryptVault, encryptProjectKeyForUser } from '../../src/lib/crypto.js'
 
 test.group('Push Command', (group) => {
   group.each.setup(() => {
@@ -36,7 +36,7 @@ test.group('Push Command', (group) => {
 
     let pushedData: any = null;
     const restoreFetch = mockFetch(async (url, init: any) => {
-      if (url.endsWith(`/api/keys/${projectId}`)) {
+      if (url.endsWith(`/api/projects/${projectId}/environments/live/key`)) {
         return {
           ok: true,
           status: 200,
@@ -45,27 +45,47 @@ test.group('Push Command', (group) => {
           })
         }
       }
+      if (url.endsWith(`/api/projects/${projectId}/environments`)) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{ id: 'env_1', name: 'live', protected: true, retention: null, snapshotCount: 0, lastPushAt: null }]
+        }
+      }
       if (url.endsWith('/api/secrets') && init?.method === 'POST') {
         pushedData = JSON.parse(init.body);
         return {
           ok: true,
           status: 200,
-          json: async () => ({ id: 'snap_1', version: 1 })
+          json: async () => ({ id: 'snap_1', version: pushedData.version })
         }
+      }
+      if (url.includes('/api/secrets/history')) {
+        return { ok: false, status: 404, json: async () => ({ message: 'No history' }) }
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([vaultPassword, 'production']);
+    prompts.inject([vaultPassword, 'live']);
 
     await pushCommand.parseAsync([], { from: 'user' });
 
     assert.isNotNull(pushedData, 'API should receive pushed data');
     assert.equal(pushedData.projectId, projectId);
-    assert.equal(pushedData.environment, 'production');
+    assert.equal(pushedData.environment, 'live');
     assert.exists(pushedData.encryptedData.ciphertext);
     assert.exists(pushedData.encryptedData.iv);
     assert.exists(pushedData.encryptedData.authTag);
+    assert.equal(pushedData.cryptoVersion, 2);
+    assert.equal(pushedData.version, 1);
+    assert.equal(pushedData.keyVersion, 1);
+
+    const pushed = decryptSnapshot(
+      { ...pushedData.encryptedData, tag: pushedData.encryptedData.authTag, version: 1, cryptoVersion: 2 },
+      projectKey,
+      { projectId, environment: 'live' }
+    );
+    assert.equal(pushed, 'DB_URL=postgres://localhost:5432/db');
 
     restoreFetch();
   })
