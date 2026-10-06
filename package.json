@@ -24,7 +24,11 @@
     "dev": "tsx src/index.ts",
     "lint": "tsc --noEmit",
     "test": "tsx bin/test.ts",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "changeset": "changeset",
+    "version": "changeset version && pnpm install --lockfile-only",
+    "release": "pnpm build && changeset publish",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "cli",
@@ -54,6 +58,8 @@
     "url": "git+https://github.com/project-gitgone/cli.git"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "~0.5.2",
+    "@changesets/cli": "^3.0.3",
     "@japa/assert": "^4.2.0",
     "@japa/runner": "^5.3.0",
     "@types/cross-spawn": "^6.0.6",

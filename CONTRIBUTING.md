@@ -1,35 +1,43 @@
-# Contributing to GitGone
+# Contributing
 
-Thank you for your interest in contributing to GitGone! We welcome contributions from everyone.
+Thanks for helping with the GitGone CLI.
 
-## How to Contribute
+## Setup
 
-### Reporting Bugs
+Node 22 or newer and pnpm (`corepack enable`).
 
-- Search the issues to see if the bug has already been reported.
-- If not, open a new issue. Include a clear title and a detailed description with steps to reproduce.
+```bash
+pnpm install
+pnpm test
+pnpm build && node dist/index.js --help
+```
 
-### Suggesting Enhancements
+Point it at a local server with `gitgone config set serverUrl http://localhost:3333`.
 
-- Open a new issue with the tag "enhancement".
-- Describe the proposed change and why it would be useful.
+## Before opening a pull request
 
-### Pull Requests
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Make your changes, ensuring code style consistency.
-4. Add tests for your changes.
-5. Submit a pull request with a clear description of the work.
+CI runs the same commands, plus CodeQL, Gitleaks, Plumber, actionlint and typos.
 
-## Development Setup
+## Changesets
 
-GitGone is a monorepo consisting of:
-- `server/`: AdonisJS backend.
-- `cli/`: TypeScript CLI tool.
+A change that ships to users needs a changeset: run `pnpm changeset`, pick the bump (patch, minor, major) and
+describe the change for the CHANGELOG. Docs, tests and refactors without user impact do not need one.
 
-Refer to the `README.md` in each directory for specific setup instructions.
+On every push to `main`, the Release workflow opens or updates a **chore: version packages** pull request that
+bumps the version and the CHANGELOG. Merging it publishes `@project-gitgone/cli` to npm.
+
+## Conventions
+
+- TypeScript strict, no comments in the code.
+- Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
+- `main` is protected: every change goes through a pull request with a green CI.
 
 ## Code of Conduct
 
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+This project follows the [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating you agree to abide by its terms.
