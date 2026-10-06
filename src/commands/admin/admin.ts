@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { api } from '../../api/client.js';
 import type { Activation, AuthResult, Health, User } from '../../api/types.js';
-import { loginAction } from '../../flows/login.js';
+import { cloudLoginAction, loginAction, serverUsesCloudLogin } from '../../flows/login.js';
 import { setConfig } from '../../lib/config.js';
 import { generateKeyPair } from '../../lib/crypto.js';
 import { buildAccountCredentials } from '../../services/account.js';
@@ -44,6 +44,12 @@ async function setup() {
   const serverUrl = await text('Server URL', 'http://localhost:3333');
   if (!serverUrl) return;
   setConfig('serverUrl', serverUrl);
+
+  if (await serverUsesCloudLogin()) {
+    info('This instance is managed by GitGone Cloud: sign in with your cloud account.');
+    info('The owner of the organization becomes administrator of the instance.');
+    return cloudLoginAction();
+  }
 
   const health = await task('Checking server status...', 'Setup failed', async (spinner) => {
     const result = await api<Health>('/healthcheck', { requireAuth: false });

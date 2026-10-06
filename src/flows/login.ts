@@ -26,7 +26,7 @@ async function upgradeAccount(password: string, user: AuthUser) {
   saveUser(result.user);
 }
 
-async function serverUsesCloudLogin() {
+export async function serverUsesCloudLogin() {
   try {
     const capabilities = await api<Capabilities>('/api/capabilities', { requireAuth: false });
     return Array.isArray(capabilities?.features) && capabilities.features.includes('cloud-login');
