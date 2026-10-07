@@ -1,8 +1,10 @@
+import { execute, type GitgoneCommand } from '@/cli/command.js';
+import { scriptedAsker, setAsker } from '@/ui/ask.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { nanoid } from 'nanoid';
-import { clearConfig } from '../src/lib/config.js';
+import { clearConfig } from '@/lib/config.js';
 
 export const setupEnvironment = () => {
   const testId = nanoid();
@@ -70,6 +72,29 @@ export const spyExit = () => {
     exited,
     restore: () => {
       process.exit = originalExit;
+    },
+  };
+};
+
+export const answers = (values: unknown[]) => {
+  setAsker(scriptedAsker(values));
+  return () => setAsker(scriptedAsker([]));
+};
+
+export const terminal = { env: { NO_COLOR: '1' }, streams: { stdin: { isTTY: true }, stdout: { isTTY: true } } };
+
+export const invoke = (command: GitgoneCommand<any>, args: string[] = []) => execute(command, args, terminal);
+
+export const memorySecretStore = () => {
+  const entries = new Map<string, string>();
+  return {
+    entries,
+    get: async (account: string) => entries.get(account),
+    set: async (account: string, value: string) => {
+      entries.set(account, value);
+    },
+    delete: async (account: string) => {
+      entries.delete(account);
     },
   };
 };

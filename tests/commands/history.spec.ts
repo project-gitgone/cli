@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import { historyCommand } from '../../src/commands/secrets/history.js'
-import { setLocalConfig } from '../../src/lib/config.js'
+import { setupEnvironment, mockFetch, spyConsole, invoke } from '@tests/helpers.js'
+import { historyCommand } from '@/commands/secrets.js'
+import { setLocalConfig } from '@/lib/config.js'
 
 test.group('History Command', (group) => {
   group.each.setup(() => {
@@ -31,7 +31,7 @@ test.group('History Command', (group) => {
 
     const consoleSpy = spyConsole()
 
-    await historyCommand.parseAsync([], { from: 'user' })
+    await invoke(historyCommand, ['-e', 'development'])
 
     const output = consoleSpy.logs.join('\n')
     assert.include(output, 'User A')

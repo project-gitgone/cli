@@ -1,14 +1,13 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, spyConsole, answers, invoke } from '@tests/helpers.js'
 import crypto from 'node:crypto'
-import { tokensCommand } from '../../src/commands/project/tokens.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
+import { tokenCommand } from '@/commands/token.js'
+import { setConfig, setLocalConfig } from '@/lib/config.js'
 import {
   deriveTokenKeys,
   encryptVault,
   encryptProjectKeyForUser,
-} from '../../src/lib/crypto.js'
+} from '@/lib/crypto.js'
 
 const VECTOR = {
   secret: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc',
@@ -73,10 +72,10 @@ test.group('Tokens Command', (group) => {
     })
 
     const consoleSpy = spyConsole()
-    prompts.inject([vaultPassword])
+    answers([vaultPassword])
 
     try {
-      await tokensCommand.parseAsync(['create', 'CI', '-e', 'production'], { from: 'user' })
+      await invoke(tokenCommand.subCommands!.create, ['CI', '-e', 'production'])
     } finally {
       consoleSpy.restore()
       restoreFetch()

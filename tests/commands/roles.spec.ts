@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
-import prompts from 'prompts'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import { rolesCommand } from '../../src/commands/access/roles.js'
+import { setupEnvironment, mockFetch, spyConsole, answers, invoke } from '@tests/helpers.js'
+import { roleCommand } from '@/commands/role.js'
 
 const ROLES = [
   { id: 'role_developer', key: 'developer', name: 'Developer', scope: 'workspace', isSystem: true, grants: [{ permission: 'env.write', environments: { type: 'unprotected' } }] },
@@ -28,7 +27,7 @@ test.group('Roles Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
     const spy = spyConsole()
-    await rolesCommand.parseAsync(['show', 'developer'], { from: 'user' })
+    await invoke(roleCommand.subCommands!.show, ['developer'])
     spy.restore()
     restore()
     assert.isTrue(spy.logs.some((line) => line.includes('env.write') && line.includes('unprotected environments')))
@@ -44,8 +43,8 @@ test.group('Roles Command', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    prompts.inject(['QA writer', '', 'workspace', ['env.read', 'env.write'], 'all', 'list', 'qa, staging'])
-    await rolesCommand.parseAsync(['create'], { from: 'user' })
+    answers(['QA writer', '', 'workspace', ['env.read', 'env.write'], 'all', 'list', 'qa, staging'])
+    await invoke(roleCommand.subCommands!.create)
     restore()
     assert.deepEqual(sent, {
       name: 'QA writer',
@@ -64,7 +63,7 @@ test.group('Roles Command', (group) => {
       if (init?.method === 'DELETE') deleted = true
       return { ok: true, status: 200, json: async () => ROLES }
     })
-    await rolesCommand.parseAsync(['delete', 'developer'], { from: 'user' })
+    await assert.rejects(() => invoke(roleCommand.subCommands!.delete, ['developer']), 'Default roles cannot be deleted.')
     restore()
     assert.isFalse(deleted)
   })

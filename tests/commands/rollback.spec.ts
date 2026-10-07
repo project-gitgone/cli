@@ -1,12 +1,11 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { rollbackCommand } from '../../src/commands/secrets/rollback.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { decryptSnapshot, encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
+import { rollbackCommand } from '@/commands/secrets.js'
+import { setConfig, setLocalConfig } from '@/lib/config.js'
+import { decryptSnapshot, encryptVault, encryptProjectKeyForUser, encryptSecret } from '@/lib/crypto.js'
 
 test.group('Rollback Command', (group) => {
   group.each.setup(() => {
@@ -79,9 +78,9 @@ test.group('Rollback Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject(['snap_1', vaultPassword])
+    answers(['snap_1', true, vaultPassword])
 
-    await rollbackCommand.parseAsync([], { from: 'user' })
+    await invoke(rollbackCommand, ['-e', 'development'])
 
     const envPath = path.resolve(process.cwd(), '.env');
     assert.isTrue(fs.existsSync(envPath), '.env should be created/updated');

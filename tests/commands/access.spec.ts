@@ -1,8 +1,8 @@
 import { test } from '@japa/runner'
 import fs from 'fs'
 import path from 'path'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import { accessCommand } from '../../src/commands/access/access.js'
+import { setupEnvironment, mockFetch, spyConsole, invoke } from '@tests/helpers.js'
+import { accessCommand } from '@/commands/access.js'
 
 const ROLES = [{ id: 'role_viewer', key: 'viewer', name: 'Viewer', scope: 'workspace', isSystem: true, grants: [] }]
 
@@ -28,7 +28,7 @@ test.group('Access Command', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    await accessCommand.parseAsync(['grant', 'guest@example.com', 'viewer'], { from: 'user' })
+    await invoke(accessCommand.subCommands!.grant, ['guest@example.com', 'viewer'])
     restore()
     assert.deepEqual(sent, { email: 'guest@example.com', roleId: 'role_viewer' })
   })
@@ -49,10 +49,11 @@ test.group('Access Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
     const spy = spyConsole()
-    await accessCommand.parseAsync(['list'], { from: 'user' })
+    const members = (await invoke(accessCommand.subCommands!.list)) as { source: string; user: { email: string } }[]
     spy.restore()
     restore()
-    assert.isTrue(spy.logs.some((line) => line.includes('"Via":"team"') && line.includes('a@example.com')))
+    assert.isTrue(members.some((member) => member.source === 'team' && member.user.email === 'a@example.com'))
+    assert.isTrue(spy.logs.some((line) => line.includes('a@example.com') && line.includes('team')))
   })
 
   test('revoke removes the project role of the user', async ({ assert }) => {
@@ -75,7 +76,7 @@ test.group('Access Command', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    await accessCommand.parseAsync(['revoke', 'b@example.com'], { from: 'user' })
+    await invoke(accessCommand.subCommands!.revoke, ['b@example.com'])
     restore()
     assert.isTrue(deletedUrl.endsWith('/api/projects/prj_1/members/usr_b'))
   })

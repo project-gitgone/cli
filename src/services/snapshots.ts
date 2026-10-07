@@ -1,8 +1,8 @@
-import { api, isNotFound } from '../api/client.js';
-import type { HistoryEntry, StoredSnapshot } from '../api/types.js';
-import { getConfig, setConfig } from '../lib/config.js';
-import { decryptSnapshot, encryptSnapshot, type EncryptedSnapshot } from '../lib/crypto.js';
-import type { Key } from './keyring.js';
+import { api, isNotFound } from '@/api/client.js';
+import type { HistoryEntry, StoredSnapshot } from '@/api/types.js';
+import { getConfig, setConfig } from '@/lib/config.js';
+import { decryptSnapshot, encryptSnapshot, type EncryptedSnapshot } from '@/lib/crypto.js';
+import type { Key } from '@/services/keyring.js';
 
 const query = (projectId: string, environment: string) =>
   new URLSearchParams({ projectId, env: environment }).toString();

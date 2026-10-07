@@ -1,8 +1,8 @@
 import { test } from '@japa/runner'
 import fs from 'fs'
 import path from 'path'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import { envCommand } from '../../src/commands/project/env.js'
+import { setupEnvironment, mockFetch, invoke } from '@tests/helpers.js'
+import { envCommand } from '@/commands/env.js'
 
 const ENVIRONMENTS = [{ id: 'env_1', name: 'live', protected: false, retention: null, snapshotCount: 2, lastPushAt: null }]
 
@@ -29,7 +29,7 @@ test.group('Env Command', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    await envCommand.parseAsync(['protect', 'live'], { from: 'user' })
+    await invoke(envCommand.subCommands!.protect, ['live'])
     restore()
     assert.isTrue(patchedUrl.endsWith('/api/projects/prj_1/environments/env_1'))
     assert.deepEqual(sent, { protected: true })
@@ -44,8 +44,8 @@ test.group('Env Command', (group) => {
       bodies.push(JSON.parse(init.body))
       return { ok: true, status: 200, json: async () => ({}) }
     })
-    await envCommand.parseAsync(['retention', 'live', 'off'], { from: 'user' })
-    await envCommand.parseAsync(['create', 'qa', '--protected', '--retention', '5'], { from: 'user' })
+    await invoke(envCommand.subCommands!.retention, ['live', 'off'])
+    await invoke(envCommand.subCommands!.create, ['qa', '--protected', '--retention', '5'])
     restore()
     assert.deepEqual(bodies, [{ retention: null }, { name: 'qa', protected: true, retention: 5 }])
   })
@@ -59,7 +59,7 @@ test.group('Env Command', (group) => {
       if (init?.method === 'PATCH') patched = true
       return { ok: true, status: 200, json: async () => ({}) }
     })
-    await envCommand.parseAsync(['retention', 'live', '1O'], { from: 'user' })
+    await assert.rejects(() => invoke(envCommand.subCommands!.retention, ['live', '1O']), /Retention must be/)
     restore()
     assert.isFalse(patched)
   })

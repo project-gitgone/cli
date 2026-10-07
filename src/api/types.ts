@@ -1,4 +1,4 @@
-import type { EncryptedSnapshot, KdfParams } from '../lib/crypto.js';
+import type { EncryptedSnapshot, KdfParams } from '@/lib/crypto.js';
 
 export type AuthUser = {
   id?: string;

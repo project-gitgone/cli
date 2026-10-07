@@ -1,14 +1,14 @@
-import { api } from '../api/client.js';
-import type { Recipient, StoredSnapshot } from '../api/types.js';
-import { getConfig } from '../lib/config.js';
+import { api } from '@/api/client.js';
+import type { Recipient, StoredSnapshot } from '@/api/types.js';
+import { getConfig } from '@/lib/config.js';
 import {
   decryptProjectKey,
   decryptSnapshot,
   encryptProjectKeyForUser,
   encryptSnapshot,
   generateProjectKey,
-} from '../lib/crypto.js';
-import { trustRecipient, type TrustDecision } from './trust.js';
+} from '@/lib/crypto.js';
+import { trustRecipient, type TrustDecision } from '@/services/trust.js';
 
 export type Keyring = { projectId: string; base: string };
 

@@ -2,7 +2,7 @@
 import Conf from 'conf';
 import fs from 'fs';
 import path from 'path';
-import type { KdfParams } from './crypto.js';
+import type { KdfParams } from '@/lib/crypto.js';
 
 
 export type ConfigSchema = {
@@ -16,6 +16,7 @@ export type ConfigSchema = {
   cryptoVersion?: number;
   kdfParams?: KdfParams;
   seenVersions?: Record<string, number>;
+  keychain?: boolean;
   knownKeys?: Record<string, { email: string; fingerprint: string }>;
 };
 
@@ -71,9 +72,9 @@ export const getLocalConfig = (): LocalConfig | null => {
   }
 };
 
-export type LocalConfig = { projectId?: string; teamId?: string; projectName?: string; serverUrl?: string };
+export type LocalConfig = { projectId?: string; teamId?: string; projectName?: string; serverUrl?: string; environment?: string };
 
-export const LOCAL_CONFIG_KEYS = ['projectId', 'teamId', 'projectName', 'serverUrl'] as const;
+export const LOCAL_CONFIG_KEYS = ['projectId', 'teamId', 'projectName', 'serverUrl', 'environment'] as const;
 
 export const setLocalConfig = (data: LocalConfig) => {
   const configPath = path.resolve(process.cwd(), LOCAL_CONFIG_FILE);
@@ -83,6 +84,7 @@ export const setLocalConfig = (data: LocalConfig) => {
 };
 
 export const getServerUrl = () => {
+  if (process.env.GITGONE_SERVER_URL) return process.env.GITGONE_SERVER_URL;
   const local = getLocalConfig();
   if (local && local.serverUrl) {
     return local.serverUrl;

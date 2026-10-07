@@ -1,7 +1,7 @@
-import { api } from '../api/client.js';
-import type { Member, Paginated, Project, Team, User } from '../api/types.js';
-import { getServerUrl, setLocalConfig } from '../lib/config.js';
-import { encryptProjectKeyForUser, generateProjectKey } from '../lib/crypto.js';
+import { api } from '@/api/client.js';
+import type { Member, Paginated, Project, Team, User } from '@/api/types.js';
+import { getServerUrl, setLocalConfig } from '@/lib/config.js';
+import { encryptProjectKeyForUser, generateProjectKey } from '@/lib/crypto.js';
 
 export const fetchProjects = async () => (await api<Project[] | null>('/api/projects')) ?? [];
 

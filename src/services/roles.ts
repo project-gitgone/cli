@@ -1,4 +1,4 @@
-import { api } from '../api/client.js';
+import { api } from '@/api/client.js';
 
 export type RoleScope = 'instance' | 'workspace';
 export type EnvironmentScope = { type: 'all' } | { type: 'unprotected' } | { type: 'list'; names: string[] };
@@ -19,7 +19,7 @@ export const fetchPermissionCatalogue = () => api<PermissionCatalogue>('/api/per
 export const findRole = async (nameOrKey: string, scope?: RoleScope): Promise<Role> => {
   const wanted = nameOrKey.trim().toLowerCase();
   const role = (await fetchRoles(scope)).find((r) => r.key === wanted || r.name.toLowerCase() === wanted);
-  if (!role) throw new Error(`Unknown ${scope ?? ''} role "${nameOrKey}". Run "gitgone roles list".`.replace('  ', ' '));
+  if (!role) throw new Error(`Unknown ${scope ?? ''} role "${nameOrKey}". Run "gitgone role list".`.replace('  ', ' '));
   return role;
 };
 

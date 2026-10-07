@@ -1,4 +1,4 @@
-import { getConfig, getServerUrl } from '../lib/config.js';
+import { getConfig, getServerUrl } from '@/lib/config.js';
 
 export class ApiError extends Error {
   constructor(

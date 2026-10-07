@@ -1,13 +1,12 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, spyConsole, answers, invoke } from '@tests/helpers.js'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { pullCommand } from '../../src/commands/secrets/pull.js'
-import { keysCommand } from '../../src/commands/project/keys.js'
-import { projectCommand } from '../../src/commands/project/project.js'
-import { getConfig, setConfig, setLocalConfig } from '../../src/lib/config.js'
+import { pullCommand } from '@/commands/secrets.js'
+import { keyCommand } from '@/commands/key.js'
+import { projectCommand } from '@/commands/project.js'
+import { getConfig, setConfig, setLocalConfig } from '@/lib/config.js'
 import {
   decryptProjectKey,
   decryptSnapshot,
@@ -16,7 +15,7 @@ import {
   encryptSnapshot,
   encryptVault,
   publicKeyFingerprint,
-} from '../../src/lib/crypto.js'
+} from '@/lib/crypto.js'
 
 const PASSWORD = 'secure_password'
 
@@ -107,9 +106,9 @@ test.group('Anti-rollback', (group) => {
       return json(404, {})
     })
 
-    prompts.inject([PASSWORD])
+    answers([PASSWORD])
     try {
-      await silently(() => pullCommand.parseAsync(['-e', 'production'], { from: 'user' }))
+      await assert.rejects(() => silently(() => invoke(pullCommand, ['-e', 'production'])), /rollback attack/)
     } finally {
       restoreFetch()
     }
@@ -131,9 +130,9 @@ test.group('Anti-rollback', (group) => {
       return json(404, { message: 'No secrets found for this environment' })
     })
 
-    prompts.inject([PASSWORD])
+    answers([PASSWORD])
     try {
-      await silently(() => pullCommand.parseAsync(['-e', 'staging'], { from: 'user' }))
+      await silently(() => invoke(pullCommand, ['-e', 'staging']))
     } finally {
       restoreFetch()
     }
@@ -177,10 +176,10 @@ test.group('Key pinning', (group) => {
       return json(404, {})
     })
 
-    prompts.inject([true, PASSWORD])
+    answers([true, PASSWORD])
     let output = ''
     try {
-      output = await silently(() => keysCommand.parseAsync(['share'], { from: 'user' }))
+      output = await silently(() => invoke(keyCommand.subCommands!.share).catch((error) => console.log(error.message)))
     } finally {
       restoreFetch()
     }
@@ -243,10 +242,10 @@ test.group('Project key rotation', (group) => {
       return json(404, {})
     })
 
-    prompts.inject([true, PASSWORD, true])
+    answers([true, PASSWORD, true])
     let output = ''
     try {
-      output = await silently(() => projectCommand.parseAsync(['rotate-key'], { from: 'user' }))
+      output = await silently(() => invoke(projectCommand.subCommands!['rotate-key']))
     } finally {
       restoreFetch()
     }

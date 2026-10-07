@@ -2,13 +2,12 @@ import { test } from '@japa/runner'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import prompts from 'prompts'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import { setConfig } from '../../src/lib/config.js'
-import { createKdfParams, deriveAccountKeys, encryptProjectKeyForUser, encryptVaultV2, generateKeyPair } from '../../src/lib/crypto.js'
-import { pushCommand } from '../../src/commands/secrets/push.js'
-import { keysCommand } from '../../src/commands/project/keys.js'
-import { envCommand } from '../../src/commands/project/env.js'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
+import { setConfig } from '@/lib/config.js'
+import { createKdfParams, deriveAccountKeys, encryptProjectKeyForUser, encryptVaultV2, generateKeyPair } from '@/lib/crypto.js'
+import { pushCommand } from '@/commands/secrets.js'
+import { keyCommand } from '@/commands/key.js'
+import { envCommand } from '@/commands/env.js'
 
 const password = 'vault-password'
 
@@ -50,8 +49,8 @@ test.group('Environment keyring', (group) => {
       if (url.endsWith('/api/secrets')) return { ok: true, status: 201, json: async () => ({ id: 'snap_1', version: 1 }) }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    prompts.inject([password, '__new__', 'qa'])
-    await pushCommand.parseAsync([], { from: 'user' })
+    answers(['__new__', 'qa', password, true])
+    await invoke(pushCommand)
     restore()
 
     const rotate = calls.find((c) => c.url.endsWith(`${base}/qa/key/rotate`))
@@ -80,10 +79,9 @@ test.group('Environment keyring', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    prompts.inject([true, password, true])
-    await keysCommand.parseAsync(['share', '-e', 'production'], { from: 'user' })
+    answers([true, password, true])
+    await invoke(keyCommand.subCommands!.share, ['-e', 'production'])
     restore()
-    keysCommand.commands.find((c) => c.name() === 'share')!.setOptionValue('env', undefined)
     assert.isTrue(sharedUrl.endsWith(`${base}/production/key/share`))
   })
 
@@ -105,8 +103,8 @@ test.group('Environment keyring', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    prompts.inject([password])
-    await envCommand.parseAsync(['rotate', 'production'], { from: 'user' })
+    answers([password])
+    await invoke(envCommand.subCommands!.rotate, ['production'])
     restore()
     assert.include(rotated, { expectedKeyVersion: 2 })
   })
@@ -126,8 +124,8 @@ test.group('Environment keyring', (group) => {
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
-    prompts.inject([password, '__new__', 'qa', false])
-    await pushCommand.parseAsync([], { from: 'user' })
+    answers(['__new__', 'qa', password, true, false])
+    await invoke(pushCommand).catch(() => undefined)
     restore()
     assert.isFalse(rotated)
   })

@@ -1,12 +1,11 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch, spyExit } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, spyExit, answers, invoke } from '@tests/helpers.js'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { runCommand } from '../../src/commands/secrets/run.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
+import { runCommand } from '@/commands/secrets.js'
+import { setConfig, setLocalConfig } from '@/lib/config.js'
+import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '@/lib/crypto.js'
 
 test.group('Run Command', (group) => {
   group.each.setup(() => {
@@ -68,12 +67,12 @@ test.group('Run Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([vaultPassword])
+    answers([vaultPassword])
 
     const exitSpy = spyExit()
 
     try {
-        await runCommand.parseAsync(['echo', 'hello'], { from: 'user' })
+        await invoke(runCommand, ['-e', 'development', '--', 'echo', 'hello'])
         assert.equal(await exitSpy.exited, 0)
     } finally {
         exitSpy.restore()

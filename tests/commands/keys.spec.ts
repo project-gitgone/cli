@@ -1,10 +1,9 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
 import crypto from 'node:crypto'
-import { keysCommand } from '../../src/commands/project/keys.js'
-import { getConfig, setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser, decryptProjectKey, publicKeyFingerprint } from '../../src/lib/crypto.js'
+import { keyCommand } from '@/commands/key.js'
+import { getConfig, setConfig, setLocalConfig } from '@/lib/config.js'
+import { encryptVault, encryptProjectKeyForUser, decryptProjectKey, publicKeyFingerprint } from '@/lib/crypto.js'
 
 test.group('Keys Command', (group) => {
   group.each.setup(() => {
@@ -66,9 +65,9 @@ test.group('Keys Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([true, vaultPassword, true])
+    answers([true, vaultPassword, true])
 
-    await keysCommand.parseAsync(['share'], { from: 'user' })
+    await invoke(keyCommand.subCommands!.share)
 
     assert.isNotNull(sharedPayload)
     assert.equal(sharedPayload.targetUserId, 'user_pending_1')
