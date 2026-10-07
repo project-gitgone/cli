@@ -61,7 +61,7 @@ test.group('Command suggestions', () => {
 
   test('a typo suggests the closest command', ({ assert }) => {
     assert.equal(suggestCommand('pul', known), 'pull')
-    assert.equal(suggestCommand('stauts', known), 'status')
+    assert.equal(suggestCommand('statsu', known), 'status')
   })
 
   test('nothing close gives no suggestion', ({ assert }) => {
