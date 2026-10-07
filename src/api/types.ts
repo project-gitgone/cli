@@ -90,3 +90,21 @@ export type AuditEvent = {
 export type Health = { initialized: boolean };
 
 export type Capabilities = { version: string; features: string[] };
+
+export type TimelineAuthor = { type: 'user' | 'token'; label: string };
+
+export type TimelineEvent =
+  | {
+      type: 'version';
+      id: string;
+      environment: string;
+      version: number;
+      keyVersion: number;
+      rollbackOf: number | null;
+      author: TimelineAuthor;
+      createdAt: string;
+    }
+  | { type: 'rotation'; environment: string | null; keyVersion: number | null; author: TimelineAuthor; createdAt: string }
+  | { type: 'environment'; environment: string; author: TimelineAuthor; createdAt: string };
+
+export type Timeline = { environments: string[]; events: TimelineEvent[]; nextBefore: string | null };
