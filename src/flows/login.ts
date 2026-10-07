@@ -1,11 +1,11 @@
 import { api, isNotFound } from '../api/client.js';
-import type { AuthResult, AuthUser, Capabilities, Prelogin } from '../api/types.js';
+import type { AuthResult, AuthUser, Capabilities, Health, Prelogin } from '../api/types.js';
 import { decryptVault, deriveAccountKeys, generateKeyPair } from '../lib/crypto.js';
 import { buildAccountCredentials } from '../services/account.js';
 import { browserLogin, openBrowser, type BrowserOpener } from '../services/cloud-login.js';
 import { saveSession, saveUser } from '../services/session.js';
-import { errorMessage, task } from '../ui/feedback.js';
-import { promptNewPassword } from '../ui/prompts.js';
+import { errorMessage, info, task } from '../ui/feedback.js';
+import { promptNewPassword, text } from '../ui/prompts.js';
 import prompts from 'prompts';
 
 async function fetchPrelogin(email: string): Promise<Prelogin | null> {
@@ -75,8 +75,40 @@ export async function cloudLoginAction(open: BrowserOpener = openBrowser) {
   console.log(`Logged in as ${result.user.full_name}`);
 }
 
+async function serverIsInitialized() {
+  try {
+    const health = await api<Health>('/healthcheck', { requireAuth: false });
+    return health.initialized !== false;
+  } catch {
+    return true;
+  }
+}
+
+async function createFirstAdmin() {
+  info('🚀 This server has no administrator yet: create it now.');
+  const email = await text('Admin Email');
+  const fullName = email && (await text('Full Name'));
+  if (!email || !fullName) return;
+  const password = await promptNewPassword('Admin Password');
+  if (!password) return;
+
+  await task('Generating encryption keys...', 'Setup failed', async (spinner) => {
+    const { publicKey, privateKey } = generateKeyPair();
+    const credentials = buildAccountCredentials(password, privateKey);
+    spinner.text = 'Creating admin account...';
+    const result = await api<AuthResult>('/api/setup/init-admin', {
+      method: 'POST',
+      body: { email, fullName, publicKey, ...credentials },
+      requireAuth: false,
+    });
+    saveSession(result);
+    spinner.succeed('✅ Admin created and logged in.');
+  });
+}
+
 export async function loginAction(options: { password?: boolean } = {}) {
   if (!options.password && (await serverUsesCloudLogin())) return cloudLoginAction();
+  if (!(await serverIsInitialized())) return createFirstAdmin();
 
   const response = await prompts([
     { type: 'text', name: 'email', message: 'Email' },

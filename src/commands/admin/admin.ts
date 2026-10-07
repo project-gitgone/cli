@@ -1,15 +1,13 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { api } from '../../api/client.js';
-import type { Activation, AuthResult, Health, User } from '../../api/types.js';
-import { cloudLoginAction, loginAction, serverUsesCloudLogin } from '../../flows/login.js';
-import { setConfig } from '../../lib/config.js';
-import { generateKeyPair } from '../../lib/crypto.js';
-import { buildAccountCredentials } from '../../services/account.js';
-import { isLoggedIn, saveSession } from '../../services/session.js';
+import type { Activation, User } from '../../api/types.js';
+import { loginAction } from '../../flows/login.js';
+import { getConfig, setConfig } from '../../lib/config.js';
+import { isLoggedIn } from '../../services/session.js';
 import { fetchUsers } from '../../services/workspace.js';
-import { info, success, task, warn } from '../../ui/feedback.js';
-import { confirm, pickRole, pickUser, promptNewPassword, text } from '../../ui/prompts.js';
+import { success, task, warn } from '../../ui/feedback.js';
+import { confirm, pickRole, pickUser, text } from '../../ui/prompts.js';
 
 const printActivation = (email: string, result: Activation) => {
   console.log(`\nSend these to ${chalk.cyan(email)} through a secure channel:`);
@@ -18,49 +16,16 @@ const printActivation = (email: string, result: Activation) => {
   console.log(`  They must run: ${chalk.cyan('gitgone activate')}\n`);
 };
 
-async function createFirstAdmin() {
-  info('🚀 First time setup detected!');
-  const email = await text('Admin Email');
-  const fullName = email && (await text('Full Name'));
-  if (!email || !fullName) return;
-  const password = await promptNewPassword('Admin Password');
-  if (!password) return;
-
-  await task('Generating encryption keys...', 'Setup failed', async (spinner) => {
-    const { publicKey, privateKey } = generateKeyPair();
-    const credentials = buildAccountCredentials(password, privateKey);
-    spinner.text = 'Creating admin account...';
-    const result = await api<AuthResult>('/api/setup/init-admin', {
-      method: 'POST',
-      body: { email, fullName, publicKey, ...credentials },
-      requireAuth: false,
-    });
-    saveSession(result);
-    spinner.succeed('✅ Admin created and logged in.');
-  });
-}
-
 async function setup() {
-  const serverUrl = await text('Server URL', 'http://localhost:3333');
+  warn('`gitgone admin setup` is deprecated: use `gitgone login`, which also creates the first administrator.');
+  const serverUrl = await text('Server URL', getConfig().serverUrl ?? 'http://localhost:3333');
   if (!serverUrl) return;
   setConfig('serverUrl', serverUrl);
-
-  if (await serverUsesCloudLogin()) {
-    info('This instance is managed by GitGone Cloud: sign in with your cloud account.');
-    info('The owner of the organization becomes administrator of the instance.');
-    return cloudLoginAction();
+  if (isLoggedIn()) {
+    success('✅ Already logged in.');
+    return;
   }
-
-  const health = await task('Checking server status...', 'Setup failed', async (spinner) => {
-    const result = await api<Health>('/healthcheck', { requireAuth: false });
-    spinner.succeed('Server reachable');
-    return result;
-  });
-  if (!health) return;
-
-  if (!health.initialized) return createFirstAdmin();
-  success('✅ Server is already initialized.');
-  if (!isLoggedIn()) await loginAction();
+  await loginAction();
 }
 
 async function chooseUser() {
@@ -121,7 +86,7 @@ async function setUserRole() {
 }
 
 export const adminCommand = new Command('admin').description('Administration commands');
-adminCommand.command('setup').description('Initial server setup (Create SuperAdmin)').action(setup);
+adminCommand.command('setup').description('Deprecated: use `gitgone login`').action(setup);
 
 const users = adminCommand.command('users').description('Manage users');
 users.command('list').action(listUsers);
