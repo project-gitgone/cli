@@ -1,12 +1,11 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'node:crypto'
-import { pullCommand } from '../../src/commands/secrets/pull.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '../../src/lib/crypto.js'
+import { pullCommand } from '@/commands/secrets.js'
+import { setConfig, setLocalConfig } from '@/lib/config.js'
+import { encryptVault, encryptProjectKeyForUser, encryptSecret } from '@/lib/crypto.js'
 
 test.group('Pull Command', (group) => {
   group.each.setup(() => {
@@ -59,9 +58,9 @@ test.group('Pull Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([vaultPassword])
+    answers([vaultPassword])
 
-    await pullCommand.parseAsync(['-e', 'development'], { from: 'user' })
+    await invoke(pullCommand, ['-e', 'development'])
 
     const envPath = path.resolve(process.cwd(), '.env');
     assert.isTrue(fs.existsSync(envPath), '.env should be created');

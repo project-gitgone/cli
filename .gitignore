@@ -25,3 +25,8 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+.claude
+docs/
+CLAUDE.md
+.superpowers

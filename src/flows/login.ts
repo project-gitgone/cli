@@ -1,12 +1,14 @@
-import { api, isNotFound } from '../api/client.js';
-import type { AuthResult, AuthUser, Capabilities, Health, Prelogin } from '../api/types.js';
-import { decryptVault, deriveAccountKeys, generateKeyPair } from '../lib/crypto.js';
-import { buildAccountCredentials } from '../services/account.js';
-import { browserLogin, openBrowser, type BrowserOpener } from '../services/cloud-login.js';
-import { saveSession, saveUser } from '../services/session.js';
-import { errorMessage, info, task } from '../ui/feedback.js';
-import { promptNewPassword, text } from '../ui/prompts.js';
-import prompts from 'prompts';
+import { api, isNotFound } from '@/api/client.js';
+import type { AuthResult, AuthUser, Capabilities, Prelogin } from '@/api/types.js';
+import { decryptVault, deriveAccountKeys, generateKeyPair } from '@/lib/crypto.js';
+import { buildAccountCredentials } from '@/services/account.js';
+import { browserLogin, openBrowser, type BrowserOpener } from '@/services/cloud-login.js';
+import { checkServer } from '@/services/server.js';
+import { saveSession, saveUser } from '@/services/session.js';
+import { errorMessage, info, task } from '@/ui/feedback.js';
+import { error as printError, success, warn } from '@/ui/messages.js';
+import { writeLine } from '@/ui/output.js';
+import { askPassword, promptNewPassword, text } from '@/ui/prompts.js';
 
 async function fetchPrelogin(email: string): Promise<Prelogin | null> {
   try {
@@ -36,7 +38,7 @@ export async function serverUsesCloudLogin() {
 }
 
 async function createUnlockPhrase(user: AuthUser) {
-  console.log('Choose an unlock phrase: it encrypts your private key on this server and is never sent to it.');
+  writeLine('Choose an unlock phrase: it encrypts your private key on this server and is never sent to it.');
   const phrase = await promptNewPassword('Unlock phrase');
   if (!phrase) throw new Error('An unlock phrase is required to use encrypted secrets.');
 
@@ -50,7 +52,7 @@ export async function cloudLoginAction(open: BrowserOpener = openBrowser) {
   let result: AuthResult;
   try {
     const { code, codeVerifier } = await browserLogin((url) => {
-      console.log(`Opening your browser to sign in. If it does not open, visit:\n${url}`);
+      writeLine(`Opening your browser to sign in. If it does not open, visit:\n${url}`);
       open(url);
     });
     result = await api<AuthResult>('/api/auth/cloud/exchange', {
@@ -60,7 +62,7 @@ export async function cloudLoginAction(open: BrowserOpener = openBrowser) {
     });
     saveSession(result);
   } catch (error) {
-    console.log(`Login failed: ${errorMessage(error)}`);
+    printError(`Login failed: ${errorMessage(error)}`);
     return;
   }
 
@@ -68,21 +70,14 @@ export async function cloudLoginAction(open: BrowserOpener = openBrowser) {
     try {
       await createUnlockPhrase(result.user);
     } catch (error) {
-      console.log(`Logged in, but your keys are not set up: ${errorMessage(error)}`);
+      warn(`Logged in, but your keys are not set up: ${errorMessage(error)}`);
       return;
     }
   }
-  console.log(`Logged in as ${result.user.full_name}`);
+  success(`Logged in as ${result.user.full_name}`);
 }
 
-async function serverIsInitialized() {
-  try {
-    const health = await api<Health>('/healthcheck', { requireAuth: false });
-    return health.initialized !== false;
-  } catch {
-    return true;
-  }
-}
+const serverIsInitialized = async () => (await checkServer()).initialized;
 
 async function createFirstAdmin() {
   info('🚀 This server has no administrator yet: create it now.');
@@ -110,11 +105,10 @@ export async function loginAction(options: { password?: boolean } = {}) {
   if (!options.password && (await serverUsesCloudLogin())) return cloudLoginAction();
   if (!(await serverIsInitialized())) return createFirstAdmin();
 
-  const response = await prompts([
-    { type: 'text', name: 'email', message: 'Email' },
-    { type: 'password', name: 'password', message: 'Password' },
-  ]);
-  if (!response.email || !response.password) return;
+  const email = await text('Email');
+  const password = email && (await askPassword('Password'));
+  if (!email || !password) return;
+  const response = { email, password };
 
   await task('Logging in...', 'Login failed', async (spinner) => {
     const prelogin = await fetchPrelogin(response.email);

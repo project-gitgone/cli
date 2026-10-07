@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { getServerUrl } from '../lib/config.js';
+import { getServerUrl } from '@/lib/config.js';
 
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 

@@ -1,11 +1,10 @@
 import { test } from '@japa/runner'
 import http from 'node:http'
 import crypto from 'node:crypto'
-import prompts from 'prompts'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import { cloudLoginAction, loginAction } from '../../src/flows/login.js'
-import { getConfig } from '../../src/lib/config.js'
-import { unlockPrivateKey } from '../../src/services/session.js'
+import { setupEnvironment, mockFetch, spyConsole, answers } from '@tests/helpers.js'
+import { cloudLoginAction, loginAction } from '@/flows/login.js'
+import { getConfig } from '@/lib/config.js'
+import { unlockPrivateKey } from '@/services/session.js'
 
 const json = (status: number, body: unknown) => ({
   ok: status >= 200 && status < 300,
@@ -49,7 +48,7 @@ test.group('Cloud login', (group) => {
       return json(404, { message: 'not found' })
     })
     const consoleSpy = spyConsole()
-    prompts.inject([PHRASE, PHRASE])
+    answers([PHRASE, PHRASE])
     try {
       await cloudLoginAction((url) => {
         challenge = new URL(url).searchParams.get('code_challenge')!
@@ -89,7 +88,7 @@ test.group('Cloud login', (group) => {
       return json(401, { message: 'Invalid credentials' })
     })
     const consoleSpy = spyConsole()
-    prompts.inject(['someone@example.com', 'password123'])
+    answers(['someone@example.com', 'password123'])
     try {
       await loginAction()
     } finally {

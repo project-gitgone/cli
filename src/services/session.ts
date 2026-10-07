@@ -1,7 +1,7 @@
-import type { AuthResult, AuthUser, Me } from '../api/types.js';
-import { api } from '../api/client.js';
-import { deleteConfig, getConfig, setConfig } from '../lib/config.js';
-import { decryptVault, decryptVaultV2, deriveAccountKeys } from '../lib/crypto.js';
+import type { AuthResult, AuthUser, Me } from '@/api/types.js';
+import { api } from '@/api/client.js';
+import { deleteConfig, getConfig, setConfig } from '@/lib/config.js';
+import { decryptVault, decryptVaultV2, deriveAccountKeys } from '@/lib/crypto.js';
 
 const USER_KEYS = ['publicKey', 'encryptedPrivateKey', 'keySalt', 'keyEncryptionAlgo', 'cryptoVersion', 'kdfParams'] as const;
 
@@ -21,7 +21,24 @@ export const saveSession = (result: AuthResult) => {
 
 export const isLoggedIn = () => !!getConfig().authToken;
 
+export const clearSession = () => {
+  deleteConfig('authToken');
+  deleteConfig('userEmail');
+  for (const key of USER_KEYS) deleteConfig(key);
+};
+
 export const fetchMe = () => api<Me>('/api/auth/me');
+
+export const vaultKeyFromPassword = (password: string): Buffer | null => {
+  const { cryptoVersion, kdfParams } = getConfig();
+  return cryptoVersion === 2 && kdfParams ? deriveAccountKeys(password, kdfParams).vaultKey : null;
+};
+
+export const unlockWithVaultKey = (vaultKey: Buffer): string => {
+  const { encryptedPrivateKey } = getConfig();
+  if (!encryptedPrivateKey) throw new Error('Your local vault is missing. Please login again.');
+  return decryptVaultV2(encryptedPrivateKey, vaultKey);
+};
 
 export const unlockPrivateKey = (password: string): string => {
   const config = getConfig();

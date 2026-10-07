@@ -1,8 +1,9 @@
+import crypto from 'node:crypto'
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
-import { projectCommand } from '../../src/commands/project/project.js'
-import { setLocalConfig } from '../../src/lib/config.js'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
+import { projectCommand } from '@/commands/project.js'
+import { setConfig } from '@/lib/config.js'
+import { setLocalConfig } from '@/lib/config.js'
 
 test.group('Project Command', (group) => {
   group.each.setup(() => {
@@ -23,6 +24,7 @@ test.group('Project Command', (group) => {
           })
         }
       }
+      if (url.endsWith('/api/keys/new_proj_1/setup')) return { ok: true, status: 200, json: async () => ({}) }
       if (url.includes('/api/teams/team_1/projects') && init?.method === 'POST') {
         createdProjectData = JSON.parse(init.body);
         return {
@@ -34,9 +36,9 @@ test.group('Project Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject(['team_1'])
+    setConfig('publicKey', crypto.generateKeyPairSync('rsa', { modulusLength: 2048, publicKeyEncoding: { type: 'spki', format: 'pem' }, privateKeyEncoding: { type: 'pkcs8', format: 'pem' } }).publicKey)
 
-    await projectCommand.parseAsync(['create', 'MyProject'], { from: 'user' })
+    await invoke(projectCommand.subCommands!.create, ['MyProject'])
 
     assert.isNotNull(createdProjectData)
     assert.equal(createdProjectData.name, 'MyProject')
@@ -62,9 +64,9 @@ test.group('Project Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([true])
+    answers(['memory-only'])
 
-    await projectCommand.parseAsync(['set-policy'], { from: 'user' })
+    await invoke(projectCommand.subCommands!.policy)
 
     assert.isNotNull(patchData)
     assert.equal(patchData.disallowPull, true)

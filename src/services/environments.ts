@@ -1,4 +1,4 @@
-import { api } from '../api/client.js';
+import { api } from '@/api/client.js';
 
 export type Environment = {
   id: string;

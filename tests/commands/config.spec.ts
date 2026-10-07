@@ -1,30 +1,47 @@
 import { test } from '@japa/runner'
-import { setupEnvironment } from '../helpers.js'
 import fs from 'fs'
 import path from 'path'
-import { configCommand } from '../../src/commands/config.js'
-import { getConfig, getLocalConfig } from '../../src/lib/config.js'
+import { configCommand } from '@/commands/config.js'
+import { setConfig, getConfig, getLocalConfig } from '@/lib/config.js'
+import { resetOutput, setOutput } from '@/ui/output.js'
+import { invoke, setupEnvironment } from '@tests/helpers.js'
+
+const { get, set } = configCommand.subCommands!
 
 test.group('Config Command', (group) => {
+  let output = ''
   group.each.setup(() => {
     const env = setupEnvironment()
-    return () => env.cleanup()
+    output = ''
+    setOutput((text) => (output += text))
+    return () => {
+      resetOutput()
+      env.cleanup()
+    }
   })
 
   test('set global config', async ({ assert }) => {
-    await configCommand.parseAsync(['set', 'serverUrl', 'http://new-url.com'], { from: 'user' })
-
-    const config = getConfig()
-    assert.equal(config.serverUrl, 'http://new-url.com')
+    await invoke(set, ['serverUrl', 'http://new-url.com'])
+    assert.equal(getConfig().serverUrl, 'http://new-url.com')
   })
 
-  test('set local config', async ({ assert }) => {
-    await configCommand.parseAsync(['local-set', 'projectId', 'proj_ABC'], { from: 'user' })
+  test('set local config with --local', async ({ assert }) => {
+    await invoke(set, ['environment', 'staging', '--local'])
+    assert.equal(getLocalConfig()?.environment, 'staging')
+    assert.isTrue(fs.existsSync(path.resolve(process.cwd(), '.gitgone')))
+  })
 
-    const localConfig = getLocalConfig()
-    assert.equal(localConfig?.projectId, 'proj_ABC')
+  test('an unknown key is refused', async ({ assert }) => {
+    await assert.rejects(() => invoke(set, ['authToken', 'x']), 'Unknown key "authToken".')
+  })
 
-    const configPath = path.resolve(process.cwd(), '.gitgone')
-    assert.isTrue(fs.existsSync(configPath))
+  test('get never shows the session or the keys', async ({ assert }) => {
+    setConfig('authToken', 'oat_secret_token')
+    setConfig('encryptedPrivateKey', 'encrypted-private-key')
+    const result = await invoke(get, [])
+    assert.notInclude(output, 'oat_secret_token')
+    assert.notInclude(output, 'encrypted-private-key')
+    assert.notInclude(JSON.stringify(result), 'oat_secret_token')
+    assert.include(output, 'serverUrl')
   })
 })

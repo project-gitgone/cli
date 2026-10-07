@@ -1,8 +1,7 @@
 import { test } from '@japa/runner'
-import prompts from 'prompts'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import { loginAction } from '../../src/flows/login.js'
-import { getConfig, setConfig } from '../../src/lib/config.js'
+import { setupEnvironment, mockFetch, spyConsole, answers } from '@tests/helpers.js'
+import { loginAction } from '@/flows/login.js'
+import { getConfig, setConfig } from '@/lib/config.js'
 
 const json = (status: number, body: unknown) => ({
   ok: status >= 200 && status < 300,
@@ -35,7 +34,7 @@ test.group('Login', (group) => {
       return json(404, { message: 'not found' })
     })
     const consoleSpy = spyConsole()
-    prompts.inject(['admin@example.com', 'Ada Admin', PASSWORD, PASSWORD])
+    answers(['admin@example.com', 'Ada Admin', PASSWORD, PASSWORD])
     try {
       await loginAction()
     } finally {
@@ -62,7 +61,7 @@ test.group('Login', (group) => {
       return json(404, { message: 'not found' })
     })
     const consoleSpy = spyConsole()
-    prompts.inject(['user@example.com', 'password123'])
+    answers(['user@example.com', 'password123'])
     try {
       await loginAction()
     } finally {

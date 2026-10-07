@@ -1,11 +1,10 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
 import fs from 'fs'
 import crypto from 'node:crypto'
-import { pushCommand } from '../../src/commands/secrets/push.js'
-import { setConfig, setLocalConfig } from '../../src/lib/config.js'
-import { decryptSnapshot, encryptVault, encryptProjectKeyForUser } from '../../src/lib/crypto.js'
+import { pushCommand } from '@/commands/secrets.js'
+import { setConfig, setLocalConfig } from '@/lib/config.js'
+import { decryptSnapshot, encryptVault, encryptProjectKeyForUser } from '@/lib/crypto.js'
 
 test.group('Push Command', (group) => {
   group.each.setup(() => {
@@ -60,15 +59,19 @@ test.group('Push Command', (group) => {
           json: async () => ({ id: 'snap_1', version: pushedData.version })
         }
       }
+      if (url.includes('/api/secrets/latest')) {
+        return { ok: false, status: 404, json: async () => ({ message: 'No secrets' }) }
+      }
       if (url.includes('/api/secrets/history')) {
         return { ok: false, status: 404, json: async () => ({ message: 'No history' }) }
       }
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject([vaultPassword, 'live']);
+    answers(['live', vaultPassword, true]);
 
-    await pushCommand.parseAsync([], { from: 'user' });
+    const result = await invoke(pushCommand);
+    assert.deepEqual(result, { pushed: true, environment: 'live', version: 1, changes: { added: ['DB_URL'], changed: [], removed: [] } });
 
     assert.isNotNull(pushedData, 'API should receive pushed data');
     assert.equal(pushedData.projectId, projectId);

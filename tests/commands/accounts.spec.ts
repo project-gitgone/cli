@@ -1,19 +1,17 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch, spyConsole } from '../helpers.js'
-import prompts from 'prompts'
+import { setupEnvironment, mockFetch, spyConsole, answers, invoke } from '@tests/helpers.js'
 import crypto from 'node:crypto'
-import { loginAction } from '../../src/flows/login.js'
-import { activateCommand } from '../../src/commands/auth/activate.js'
-import { passwdCommand } from '../../src/commands/auth/passwd.js'
-import { getConfig, setConfig } from '../../src/lib/config.js'
-import { unlockPrivateKey } from '../../src/services/session.js'
+import { loginAction } from '@/flows/login.js'
+import { accountCommand } from '@/commands/account.js'
+import { getConfig, setConfig } from '@/lib/config.js'
+import { unlockPrivateKey } from '@/services/session.js'
 import {
   decryptVaultV2,
   deriveAccountKeys,
   encryptVault,
   encryptVaultV2,
   type KdfParams,
-} from '../../src/lib/crypto.js'
+} from '@/lib/crypto.js'
 
 const VECTOR = {
   password: 'correct horse battery staple',
@@ -89,7 +87,7 @@ test.group('Login', (group) => {
       return json(404, {})
     })
 
-    prompts.inject(['v2@test.com', VECTOR.password])
+    answers(['v2@test.com', VECTOR.password])
     try {
       await runSilently(loginAction)
     } finally {
@@ -139,7 +137,7 @@ test.group('Login', (group) => {
       return json(404, {})
     })
 
-    prompts.inject(['v1@test.com', password])
+    answers(['v1@test.com', password])
     try {
       await runSilently(loginAction)
     } finally {
@@ -177,7 +175,7 @@ test.group('Login', (group) => {
       return json(404, { message: 'Cannot POST' })
     })
 
-    prompts.inject(['old@test.com', password])
+    answers(['old@test.com', password])
     try {
       await runSilently(loginAction)
     } finally {
@@ -218,9 +216,9 @@ test.group('Activate', (group) => {
       return json(404, {})
     })
 
-    prompts.inject(['invitee@test.com', ' code123 ', password, password])
+    answers(['invitee@test.com', ' code123 ', password, password])
     try {
-      await runSilently(() => activateCommand.parseAsync([], { from: 'user' }))
+      await runSilently(() => invoke(accountCommand.subCommands!.activate))
     } finally {
       restoreFetch()
     }
@@ -273,9 +271,9 @@ test.group('Passwd', (group) => {
       return json(404, {})
     })
 
-    prompts.inject([VECTOR.password, newPassword, newPassword])
+    answers([VECTOR.password, newPassword, newPassword])
     try {
-      await runSilently(() => passwdCommand.parseAsync([], { from: 'user' }))
+      await runSilently(() => invoke(accountCommand.subCommands!.password))
     } finally {
       restoreFetch()
     }

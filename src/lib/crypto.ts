@@ -222,6 +222,15 @@ export const encryptWithTokenV2 = (text: string, tokenSecret: string) => {
   return `${iv.toString('hex')}:${authTag}:${encrypted}`;
 };
 
+export const decryptWithTokenV2 = (bundle: string, tokenSecret: string) => {
+  const [ivHex, authTagHex, encryptedHex] = bundle.split(':');
+  if (!ivHex || !authTagHex || !encryptedHex) throw new Error('Invalid token key format');
+  const decipher = crypto.createDecipheriv(SECRET_ALGO, deriveTokenKeys(tokenSecret).encryptionKey, Buffer.from(ivHex, 'hex'));
+  decipher.setAAD(TOKEN_WRAP_AAD);
+  decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+  return decipher.update(encryptedHex, 'hex', 'utf8') + decipher.final('utf8');
+};
+
 export const decryptSecret = (ciphertext: string, iv: string, authTag: string, projectKey: string) => {
   const key = crypto.createHash('sha256').update(projectKey).digest();
 

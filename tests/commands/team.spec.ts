@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
-import { setupEnvironment, mockFetch } from '../helpers.js'
-import prompts from 'prompts'
-import { teamCommand } from '../../src/commands/access/team.js'
+import { setupEnvironment, mockFetch, answers, invoke } from '@tests/helpers.js'
+import { teamCommand } from '@/commands/team.js'
 
 test.group('Team Command', (group) => {
   group.each.setup(() => {
@@ -24,7 +23,7 @@ test.group('Team Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    await teamCommand.parseAsync(['create', 'My Team'], { from: 'user' })
+    await invoke(teamCommand.subCommands!.create, ['My Team'])
 
     assert.isNotNull(createdTeam)
     assert.equal(createdTeam.name, 'My Team')
@@ -63,9 +62,9 @@ test.group('Team Command', (group) => {
       return { ok: false, status: 404, statusText: 'Not Found' }
     })
 
-    prompts.inject(['team_1', 'new@member.com', 'role_developer'])
+    answers(['new@member.com', 'role_developer'])
 
-    await teamCommand.parseAsync(['add-member'], { from: 'user' })
+    await invoke(teamCommand.subCommands!.add)
 
     assert.isNotNull(addedMember)
     assert.equal(addedMember.email, 'new@member.com')
