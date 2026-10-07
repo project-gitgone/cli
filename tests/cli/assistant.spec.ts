@@ -31,9 +31,11 @@ test.group('Assistant', (group) => {
     calls.length = 0
     output = ''
     setOutput((text) => (output += text))
-    restoreFetch = mockFetch(async (url) =>
-      url.startsWith('https://good.example.com') && url.endsWith('/healthcheck') ? json(200, { initialized: true }) : json(500, {}),
-    )
+    restoreFetch = mockFetch(async (url) => {
+      const { protocol, host, pathname } = new URL(url)
+      const healthy = protocol === 'https:' && host === 'good.example.com' && pathname === '/healthcheck'
+      return healthy ? json(200, { initialized: true }) : json(500, {})
+    })
     setConfig('serverUrl', 'https://good.example.com')
     return () => {
       restoreFetch()
