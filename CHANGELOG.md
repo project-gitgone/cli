@@ -1,5 +1,11 @@
 # @project-gitgone/cli
 
+## 26.11.1
+
+### Patch Changes
+
+- [#5](https://github.com/project-gitgone/cli/pull/5) [`76ef57d`](https://github.com/project-gitgone/cli/commit/76ef57df2dde437b4c8b376567995150673def0d) Thanks [@Asuniia](https://github.com/Asuniia)! - New `gitgone log` command: the history of every environment of the project as a graph, like `git log --graph`, with the names of the keys added, changed or removed by each version (never their values), rollbacks and key rotations. Supports `-e`, `--limit` and `--json`. Requires a server with the timeline endpoint.
+
 ## 26.11.0
 
 ### Minor Changes
